@@ -1,12 +1,12 @@
-"""Chain-aware Seedance generation for EP02 studio shots.  python studio_produce.py <plan.json> [variant=mini] [res=720p]
+"""Chain-aware Seedance generation for EP06 studio shots.  python studio_produce.py <plan.json> [variant=mini] [res=720p]
 Chains run in parallel (max 3 Ark tasks); inside a chain each shot gets the previous take's API last frame as continuity ref."""
-import json, subprocess, sys, threading, time
+import os, json, subprocess, sys, threading, time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import requests
-sys.path.insert(0, r"D:\OpenMontage")
+sys.path.insert(0, os.environ.get("OPENMONTAGE", r"D:\OpenMontage"))
 from dotenv import load_dotenv
-load_dotenv(r"D:\OpenMontage\.env")
+load_dotenv(os.environ.get("OPENMONTAGE", os.environ.get("OPENMONTAGE", r"D:\OpenMontage")) + r"\.env")
 from tools.video.seedance_ark import SeedanceArkVideo
 ep = Path(__file__).resolve().parent
 plan = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
@@ -15,7 +15,7 @@ RES = sys.argv[3] if len(sys.argv) > 3 else "720p"
 shots = {s["id"]: s for s in plan["shots"]}
 clips = ep / "studio" / "clips"; clips.mkdir(parents=True, exist_ok=True)
 slots, lock, _res = threading.Semaphore(3), threading.Lock(), set()
-START = {("老渡", "side"): "../echo_ep01_final/clips/S25_t1_last.png"}
+START = {}
 def log(msg):
     line = f"{time.strftime('%H:%M:%S')} {msg}"
     with lock:
@@ -39,7 +39,8 @@ def run_shot(sid, prev):
               "duration": s["duration"], "aspect_ratio": "16:9", "resolution": RES,
               "generate_audio": s.get("generate_audio", True), "operation": "reference_to_video", "reference_image_paths": refs, "return_last_frame": True,
               **({"reference_audio_paths": [str(Path(a).resolve()) for a in s["audio_refs"]]} if s["audio_refs"] else {}),
-              "output_path": str(out), "timeout_seconds": 1800, "poll_interval_seconds": 8}
+              "output_path": str(out), "timeout_seconds": 1800, "poll_interval_seconds": 8,
+              **({"custom_price_cny_per_million_tokens": 77.0} if VAR == "2.5" else {})}  # 2.5 has no built-in price: upper list price, only used for the cost log
     with slots:
         log(f"START {sid} t{take} {VAR} {RES} {s['duration']}s chain={'yes' if prev else 'no'}"); t0 = time.time()
         r = SeedanceArkVideo().execute(inputs)

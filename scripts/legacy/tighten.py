@@ -6,9 +6,9 @@ from pathlib import Path
 import numpy as np
 from faster_whisper import WhisperModel
 st = Path("studio"); qc = json.loads((st / "qc.json").read_text(encoding="utf-8"))
-SC = {s["id"]: s for s in json.loads(Path("script_v4.json").read_text(encoding="utf-8"))["shots"]}
+SC = {s["id"]: s for s in json.loads(Path("script_ep03.json").read_text(encoding="utf-8"))["shots"]}
 ACC = json.loads((st / "accepted.json").read_text(encoding="utf-8"))
-KEEP, HEAD, GAP = 0.40, 0.20, 0.75
+KEEP, HEAD, GAP = 0.45, 0.30, 0.75  # HEAD 0.3: soft sentence-final 了 trails ~0.25 s into the pause (192 "太大了")
 m = WhisperModel("medium", device="cuda", compute_type="float16")
 def rms(p):
     raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(p), "-vn", "-ac", "1", "-ar", "16000", "-f", "s16le", "-"], capture_output=True).stdout
@@ -28,7 +28,9 @@ for sid, keys in ACC.items():
         if ws:
             # acoustic pauses (quiet runs) between the first and last word - catches pauses whisper hides inside a stretched word
             f0, f1 = int(ws[0].end * 100), int(ws[-1].start * 100)
-            qf = e < 0.07 * peak
+            # 70 ms running median: Seedance 2.5 room tone flickers 2-10 % of peak inside pauses, which broke the old raw 7 % runs
+            sm = np.median(np.lib.stride_tricks.sliding_window_view(np.pad(e, 3, mode='edge'), 7), axis=1)
+            qf = sm < 0.12 * peak
             j = f0
             while j < f1:
                 if qf[j]:

@@ -1,0 +1,22 @@
+{
+ "out_dir": "D:/OpenMontage/output/covers_all/out",
+ "out_prefix": "EP01_封面",
+ "frames": [
+  {
+   "src": "D:/OpenMontage/output/echo_ep01_final/footage/raw/cbs2012.mp4",
+   "t": 63.1,
+   "vf": "crop=iw:ih*0.70:0:0",
+   "fx": 0.38,
+   "fy": 0.4
+  }
+ ],
+ "title": [
+  "龙不会老"
+ ],
+ "name": "马斯克与SpaceX",
+ "lines": [
+  "炸了三次，存款见底，只剩最后一枚火箭，",
+  "“除非我死了，否则绝不放弃。”"
+ ],
+ "tag": "回声号 · 第一期"
+}

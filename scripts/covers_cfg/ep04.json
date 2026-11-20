@@ -1,0 +1,23 @@
+{
+ "out_dir": "D:/OpenMontage/output/covers_all/out",
+ "out_prefix": "EP04_封面",
+ "frames": [
+  {
+   "src": "D:/OpenMontage/output/echo_ep04/footage/couple_lovelove.mp4",
+   "t": 600,
+   "vf": "crop=iw*0.55:ih*0.85:iw*0.20:ih*0.04",
+   "fx": 0.55,
+   "fy": 0.45,
+   "kill_purple": true
+  }
+ ],
+ "title": [
+  "我会幸福的"
+ ],
+ "name": "山口百惠与三浦友和",
+ "lines": [
+  "她把麦克风留在舞台上，",
+  "去守一个人四十六年"
+ ],
+ "tag": "回声号 · 第四期"
+}

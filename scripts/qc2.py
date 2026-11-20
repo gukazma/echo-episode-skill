@@ -6,14 +6,14 @@ import numpy as np
 from pypinyin import lazy_pinyin
 from faster_whisper import WhisperModel
 st = Path("studio"); qc = json.loads((st / "qc.json").read_text(encoding="utf-8"))
-SC = {s["id"]: s for s in json.loads(Path("script_v4.json").read_text(encoding="utf-8"))["shots"]}
+SC = {s["id"]: s for s in json.loads(Path("script.json").read_text(encoding="utf-8"))["shots"]}
 plans = {}
 for f in sorted(st.glob("plan_*.json"), key=lambda f: f.stat().st_mtime):
     for s in json.loads(f.read_text(encoding="utf-8"))["shots"]:
         s.setdefault("line", SC.get(s["id"], {}).get("line", "")); s.setdefault("who", SC.get(s["id"], {}).get("who", "")); plans[s["id"]] = s
 keys = [t for v in json.loads((st / "accepted.json").read_text()).values() for t in v] if "--accepted" in sys.argv else []
 keys += [a for a in sys.argv[1:] if not a.startswith("--")]
-m = WhisperModel("medium", device="cuda", compute_type="float16")
+m = WhisperModel("medium", device="cpu", compute_type="int8", cpu_threads=4)
 def pcm(p, a, b):
     raw = subprocess.run(["ffmpeg","-v","error","-ss",f"{a:.2f}","-to",f"{b:.2f}","-i",str(p),"-vn","-ac","1","-ar","16000","-f","s16le","-"],capture_output=True).stdout
     return np.frombuffer(raw, np.int16).astype(float)

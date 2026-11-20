@@ -4,7 +4,7 @@
 
 ```
 script_vN.py / .json   剧本（生成 json）
-voice_ids.json         {"laodu": "<老渡音色ID>", "xiaoyou": "<小柚音色ID>"}
+voice_ids.json         {"laodu": "S_xxxxxxxxx", "xiaoyou": "S_yyyyyyyyy"}
 drama/eps/eNN.mp4      影视原片（94 版三国 e01..e84）
 footage/*.mp4          网络实拍
 bgm/*.wav              音乐（各段已 loudnorm）
@@ -30,7 +30,7 @@ EPNN_标题_vK.mp4        成片
 `studio_plan.py <name> <ids...>` → `studio/plan_<name>.json`：每条 `{id, who, angle(side|cam), duration, refs[], audio_refs[], prompt, line}` + `chains`。
 - 定妆参考：老渡 `echo_ep01_final/img/c_laodu.png` + `s_bg_laodu.png`；小柚 `S06x_t3_last.png` + `studio/bg_xiaoyou_v1.png`。
 - `SEAT[(who, angle)]` 写死座位/朝向/背景；`POSTURE` 防陷沙发；`VOICE` 写音色；`SHOT[id] = (angle, 表演, 运镜)`；`PRON` 多音字提示；`FORCE_SPLIT`。
-- duration = `ceil(1.15·tts + 1)`，上限 MAXA 10.8 s 以上拆分。
+- duration = `ceil(1.15·tts + 1)`；2.5 一句一条（MAXA 25），不拆。
 
 `studio_produce.py <plan.json> [mini] [720p]`：链并行（最多 3 个 Ark 任务），链内每条把上一条 API last frame 追加为参考并插入 `【CONTINUITY】`。输入字典：
 ```python
@@ -62,8 +62,8 @@ EPNN_标题_vK.mp4        成片
 
 - 每段 BGM：`loudnorm=I=-20:TP=-3`，`volume` 按表，3 s qsin 淡入、3.5 s 淡出，段间重叠 1.5 s。
 - 床：`amix ... volume=0.55`；纯原片无人声段（`:mute`）床 +8 dB（2 s 斜坡）。
-- 人声轨：`aresample=48000:async=1:first_pts=0`（口型同步关键）。
-- 闪避：`sidechaincompress=threshold=0.04:ratio=4:attack=30:release=700`；总线 `loudnorm=I=-16:TP=-1.5:LRA=11`。
+- 人声轨：**不要再用 `aresample=async=1`**（EP06 v4：它在词中间插 0.12 s 静音 + 咔哒）。改为 numpy 逐段解码、按各段容器时长补齐/截断后采样级拼接成 `voice.wav`（见 `scripts/ep06/make_ep06.py` video()），交付前 `voicecmp.py` 断音 = 0。
+- 闪避：`sidechaincompress=threshold=0.04:ratio=4:attack=30:release=700`；总线：先混成 `premix.wav`（f32），实测响度后固定增益到 -16 LUFS + `alimiter=limit=0.84:level=0`（-1.5 dBFS），不用单遍动态 loudnorm。主持人段：`highpass=f=70` + 固定增益（-17.5 LUFS）+ `alimiter=limit=0.708:level=0`。
 - 片尾：`build_after_fit` 让最后一段（送别）倒推，片子结束时音乐自然收尾。
 
 ## 6. 渲染控制（环境变量）
@@ -72,5 +72,5 @@ EPNN_标题_vK.mp4        成片
 - `ONLY=__none__`：复用所有非主持人段（主持人段总是从 take 重建，便宜）；`ONLY=049,124` 只重渲这些。
 - `RANGE=118-149` 只渲一段（样片检查）。
 - `PREVIEW_TTS=1` 分镜样片：TTS 配音 + 生成画面。
-- `TIGHTEN=0` 关闭停顿收紧。
-- 渲染一次 ≈ 6–8 分钟（制作机，33 分钟成片）。
+- `TIGHTEN=0`（**默认就该这样用**）：主持人镜头不剪；`VO_TIGHT=1`（默认）旁白音频停顿收紧。
+- 渲染一次 ≈ 6–8 分钟（渲染机，33 分钟成片）。

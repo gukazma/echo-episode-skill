@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv(r"D:\OpenMontage\.env"); K = os.environ["VOLC_TTS_APIKEY"]
 B = "https://openspeech.bytedance.com"
 V = r"D:\OpenMontage\output\echo_ep01_final\voices"
-JOBS = [("<老渡音色ID>", V + r"\laodu_clone_train.wav"), ("<小柚音色ID>", V + r"\xiaoyou_clone_train.wav")]
+JOBS = [("S_xxxxxxxxx", V + r"\laodu_clone_train.wav"), ("S_yyyyyyyyy", V + r"\xiaoyou_clone_train.wav")]
 def H(): return {"X-Api-Key": K, "X-Api-Request-Id": str(uuid.uuid4()), "X-Api-Resource-Id": "seed-icl-2.0", "Content-Type": "application/json"}
 for spk, wav in JOBS:
     data = base64.b64encode(open(wav, "rb").read()).decode()

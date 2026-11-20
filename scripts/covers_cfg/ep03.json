@@ -1,0 +1,31 @@
+{
+ "out_dir": "D:/OpenMontage/output/covers_all/out",
+ "out_prefix": "EP03_封面",
+ "frames": [
+  {
+   "src": "D:/OpenMontage/output/echo_ep03/footage/bexco2002.mp4",
+   "t": 28,
+   "vf": "crop=ih*0.70*0.89:ih*0.70:iw*0.36:ih*0.02",
+   "fx": 0.62,
+   "fy": 0.45
+  },
+  {
+   "src": "D:/OpenMontage/output/echo_ep03/footage/memorial2017.mp4",
+   "t": 395,
+   "vf": "crop=ih*0.62*0.89:ih*0.62:iw*0.30:ih*0.08",
+   "fx": 0.5,
+   "fy": 0.45
+  }
+ ],
+ "title": [
+  "愿为江水",
+  "与君重逢"
+ ],
+ "name": "文在寅与卢武铉",
+ "lines": [
+  "一个走在前面，一个跟在后面，",
+  "像两条江水，奔向同一片大海"
+ ],
+ "tag": "回声号 · 第三期",
+ "fade": 0.12
+}

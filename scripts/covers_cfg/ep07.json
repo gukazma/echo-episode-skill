@@ -1,0 +1,23 @@
+{
+ "out_dir": "D:/OpenMontage/output/echo_ep07/cover",
+ "out_prefix": "EP07_封面",
+ "frames": [
+  {
+   "src": "D:/OpenMontage/output/echo_ep07/footage/snow_rescue.mp4",
+   "t": 219.5,
+   "vf": "crop=iw*0.86:ih*0.84:iw*0.04:ih*0.12",
+   "fx": 0.45,
+   "fy": 0.5
+  }
+ ],
+ "title": [
+  "我来自一架",
+  "坠落在山里的飞机"
+ ],
+ "name": "1972 · 安第斯山空难",
+ "lines": [
+  "四十五人登机，十六人生还；",
+  "他们在三千六百米的雪山上，活了七十二天"
+ ],
+ "tag": "回声号 · 第七期"
+}

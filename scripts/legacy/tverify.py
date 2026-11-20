@@ -3,7 +3,7 @@ import json, re, difflib
 from pathlib import Path
 from pypinyin import lazy_pinyin
 from faster_whisper import WhisperModel
-SH = json.loads(Path("script_v4.json").read_text(encoding="utf-8"))["shots"]
+SH = json.loads(Path("script_ep03.json").read_text(encoding="utf-8"))["shots"]
 T = json.loads(Path("studio/tighten.json").read_text(encoding="utf-8"))
 ACC = json.loads(Path("studio/accepted.json").read_text(encoding="utf-8"))
 m = WhisperModel("medium", device="cuda", compute_type="float16")
@@ -12,7 +12,7 @@ for i, s in enumerate(SH, 1):
     if s["id"] not in ACC: continue
     takes = ACC[s["id"]]
     if not any(k in T for k in takes): continue
-    p = Path("v3/seg") / (f"{i:03d}.mkv" if len(takes) > 1 else f"{i:03d}_s0.mkv")
+    p = Path("v1/seg") / (f"{i:03d}.mkv" if len(takes) > 1 else f"{i:03d}_s0.mkv")
     ws = [w for seg in m.transcribe(str(p), language="zh", vad_filter=False, word_timestamps=True, condition_on_previous_text=False, beam_size=5)[0] for w in seg.words]
     heard = "".join(w.word for w in ws)
     A, B = lazy_pinyin(clean(s["line"])), lazy_pinyin(clean(heard))

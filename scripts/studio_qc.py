@@ -1,4 +1,4 @@
-"""QC EP02 studio takes: pinyin diff vs line, voice match vs TTS (duration, F0, envelope correlation), frame strip.
+"""QC EP06 studio takes: pinyin diff vs line, voice match vs TTS (duration, F0, envelope correlation), frame strip.
 python studio_qc.py <plan.json>   → studio/qc.json + studio/review/<take>.jpg"""
 import difflib, json, re, subprocess, sys
 from pathlib import Path
@@ -7,7 +7,7 @@ from pypinyin import lazy_pinyin
 from faster_whisper import WhisperModel
 ep = Path(__file__).resolve().parent; st = ep / "studio"
 plan = {s["id"]: s for s in json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))["shots"]}
-sc = {s["id"]: s for s in json.loads((ep / "script_v4.json").read_text(encoding="utf-8"))["shots"]}
+sc = {s["id"]: s for s in json.loads((ep / "script.json").read_text(encoding="utf-8"))["shots"]}
 rv = st / "review"; rv.mkdir(exist_ok=True)
 qp = st / "qc.json"; qc = json.loads(qp.read_text(encoding="utf-8")) if qp.exists() else {}
 def pcm(p):
@@ -26,10 +26,10 @@ def speech_span(x, fs=16000):
     e = env(x); th = max(e.max() * 0.08, 300); idx = np.where(e > th)[0]
     return (idx[0] * 160 / fs, idx[-1] * 160 / fs) if len(idx) else (0, 0)
 def py(t): return re.sub(r"[^\u4e00-\u9fff0-9a-zA-Z]", "", t)
-model = WhisperModel("medium", device="cuda", compute_type="float16")
+model = WhisperModel("medium", device="cpu", compute_type="int8", cpu_threads=4)
 for mp4 in sorted((st / "clips").glob("*_t*.mp4")):
     key = mp4.stem; sid = key.split("_t")[0]
-    if (key in qc and "--redo" not in sys.argv) or sid not in plan or mp4.stat().st_size == 0: continue
+    if (key in qc and "--redo" not in sys.argv) or sid not in plan or mp4.stat().st_size == 0 or not mp4.with_suffix(".json").exists(): continue  # .json = take finished
     p = plan[sid]; s = {"line": p.get("line") or sc[sid]["line"]}
     dur = float(subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","csv=p=0",str(mp4)],capture_output=True,text=True).stdout)
     subprocess.run(["ffmpeg","-y","-v","error","-i",str(mp4),"-vf",f"fps=5/{dur:.2f},scale=384:-1,tile=5x1","-frames:v","1",str(rv / f"{key}.jpg")])

@@ -1,0 +1,22 @@
+{
+ "out_dir": "D:/OpenMontage/output/covers_all/out",
+ "out_prefix": "EP05_封面",
+ "frames": [
+  {
+   "src": "D:/OpenMontage/output/echo_ep05/footage/computex2024.mp4",
+   "t": 323,
+   "fx": 0.58,
+   "fy": 0.4
+  }
+ ],
+ "title": [
+  "离倒闭只有",
+  "三十天"
+ ],
+ "name": "黄仁勋",
+ "lines": [
+  "九岁扫厕所，十五岁洗碗，",
+  "三十岁在餐馆卡座里开了一家公司"
+ ],
+ "tag": "回声号 · 第五期"
+}

@@ -1,0 +1,23 @@
+{
+ "out_dir": "D:/OpenMontage/output/covers_all/out",
+ "out_prefix": "EP02_封面",
+ "frames": [
+  {
+   "src": "D:/OpenMontage/output/echo_ep02/drama/eps/e27.mp4",
+   "t": 1326,
+   "vf": "crop=iw-40:ih*0.665:20:ih*0.135",
+   "flip": true,
+   "fx": 0.75,
+   "fy": 0.45
+  }
+ ],
+ "title": [
+  "一诺千年"
+ ],
+ "name": "真实的诸葛亮",
+ "lines": [
+  "他没有借过东风，也没有唱过空城计，",
+  "他只是守住了一句承诺——二十七年"
+ ],
+ "tag": "回声号 · 第二期"
+}
