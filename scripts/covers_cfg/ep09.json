@@ -1,0 +1,12 @@
+{
+ "out_dir": "D:/OpenMontage/output/echo_ep09/cover",
+ "out_prefix": "EP09_封面",
+ "frames": [
+  {"src": "D:/OpenMontage/output/echo_ep09/footage/hw_mobei.mp4", "t": 12.0, "vf": "crop=iw*0.78:ih*0.78:iw*0.11:0", "fx": 0.5, "fy": 0.42},
+  {"src": "D:/OpenMontage/output/echo_ep09/footage/hexi_hqb.mp4", "t": 8.0, "vf": "crop=iw*0.86:ih*0.86:iw*0.07:0", "fx": 0.5, "fy": 0.5}
+ ],
+ "title": ["封狼居胥"],
+ "name": "霍去病",
+ "lines": ["十七岁封冠军侯，二十一岁封狼居胥，", "二十三岁，与世长辞"],
+ "tag": "回声号 · 第九期"
+}

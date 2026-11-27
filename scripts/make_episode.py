@@ -31,6 +31,7 @@ work = ep / "v1"
 for d in ("pic", "tts", "seg"):
     (work / d).mkdir(parents=True, exist_ok=True)
 APIKEY = os.environ.get("VOLC_TTS_APIKEY", "")
+APIKEY_NEW = os.environ.get("VOLC_TTS_APIKEY_NEW", "").strip()  # EP08: stock seed-tts-2.0 voices go through a second speech-console key when the first one's stock-voice quota is used up (clones stay on APIKEY)
 IDS = json.loads((ep / "voice_ids.json").read_text(encoding="utf-8")) if (ep / "voice_ids.json").exists() else {}  # {"laodu": "S_...", "xiaoyou": "S_..."} cloned voice ids (not in the repo)
 VOICE = {"老渡": (IDS["laodu"], "seed-icl-2.0") if IDS.get("laodu") else ("zh_male_m191_uranus_bigtts", "seed-tts-2.0"),
          "小柚": (IDS["xiaoyou"], "seed-icl-2.0") if IDS.get("xiaoyou") else ("zh_female_vv_uranus_bigtts", "seed-tts-2.0")}
@@ -41,7 +42,7 @@ VOICE.update({  # EP07 v2: foreign-language originals dubbed in Mandarin (user 1
     "配·卡内萨": ("zh_male_liufei_uranus_bigtts", "seed-tts-2.0"),
 })
 RATE = {"老渡": 10 if IDS.get("laodu") else -8, "小柚": 15 if IDS.get("xiaoyou") else 0}  # clones speak ~19% slower than presets
-SAY = {}  # polyphone hints for TTS only
+SAY = {}  # polyphone hints for TTS only (homophone substitution, subtitles keep the real text); EP09 example: {"单于": "蝉于", "阏氏": "烟支", "浑邪王": "浑耶王", "冠军侯": "贯军侯", "骠骑": "票骑", "终不还": "终不环", "无以家为": "无以家维"}
 
 
 def run(cmd):
@@ -158,6 +159,13 @@ def tts(s):
     if out.exists() and out.stat().st_size > 1000:
         return
     spk, rid = VOICE.get(s["who"], VOICE["老渡"])
+    if rid == "edge":  # EP08: free fallback voice for dubs (DUB_EDGE=1 style mapping in VOICE) -> 24 kHz mono wav with the same 0.3 s clean tail
+        import asyncio, edge_tts
+        mp3 = out.with_suffix(".mp3")
+        asyncio.run(edge_tts.Communicate(s["line"], spk, rate="-8%", pitch="-4Hz").save(str(mp3)))
+        run(["ffmpeg", "-y", "-v", "error", "-i", str(mp3), "-af", "apad=pad_dur=0.3", "-ar", "24000", "-ac", "1", "-c:a", "pcm_s16le", str(out)])
+        mp3.unlink(missing_ok=True)
+        return
     # 11-17: the clone model often stops mid-syllable on the last character (tail still voiced); an extra "。" makes it finish
     # the word and then go quiet - the surplus silence is trimmed below
     body = {"user": {"uid": "echo"}, "req_params": {"text": say_text(s["line"]) + "。", "speaker": spk,
@@ -171,7 +179,7 @@ def tts(s):
         body["req_params"]["additions"] = json.dumps({"context_texts": [s["ctx"]]}, ensure_ascii=False)
     for attempt in range(3):
         r = requests.post("https://openspeech.bytedance.com/api/v3/tts/unidirectional", json=body, stream=True, timeout=180,
-                          headers={"X-Api-Key": APIKEY, "X-Api-Request-Id": str(uuid.uuid4()), "X-Api-Resource-Id": rid, "Content-Type": "application/json"})
+                          headers={"X-Api-Key": APIKEY_NEW if (rid == "seed-tts-2.0" and APIKEY_NEW) else APIKEY, "X-Api-Request-Id": str(uuid.uuid4()), "X-Api-Resource-Id": rid, "Content-Type": "application/json"})
         audio, bad = b"", ""
         for line in r.iter_lines():
             if not line:
@@ -453,6 +461,19 @@ def studio_segment(i, s):
         a = max(0.0, q["speech"][0] - 0.3)
         b = min(cd, max(q["speech"][1], TAIL.get(key, 0)) + (s.get("pad", 0.45) if j == len(takes) - 1 else 0.25))
         b = min(b, END_AT.get(key, b))
+        if os.environ.get("TAILFIX", "1") == "1" and j == len(takes) - 1:  # EP08: after the last word Seedance often sits dead still -> a 0.8-1.2 s frozen-looking tail; end 0.2 s into the stillness
+            e0 = q["speech"][1] + 0.3
+            if b > e0 + 0.3:
+                vr = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{e0:.3f}", "-t", f"{b - e0:.3f}", "-i", str(src), "-vf", "scale=192:108,format=gray", "-f", "rawvideo", "-"], capture_output=True).stdout
+                fr_ = np.frombuffer(vr, np.uint8).reshape(-1, 108, 192).astype(np.float32)
+                if len(fr_) > 6:
+                    dd_ = np.abs(np.diff(fr_, axis=0)).mean((1, 2))
+                    for f_ in range(len(dd_) - 5):
+                        if (dd_[f_:f_ + 6] < 0.2).all():  # near-still (breathing only): on a quiet set (no fire flicker) a held pose reads as a frozen frame
+                            nb = e0 + f_ / 24 + 0.2
+                            if nb < b - 0.1:
+                                print("TAILFIX", key, f"{b:.2f}->{nb:.2f}", flush=True); b = nb
+                            break
         # RAMP (default on): speech stays 1x (lip-sync untouched); only the middle of long silent gaps plays fast, so a 1-2 s
         # "staring" pause becomes ~0.55 s WITHOUT a jump cut (every frame still in order). CONFORM: Seedance is 24 fps, the film 25 -
         # fps=25 would repeat one frame per second (micro-hitch); play the take 25/24 faster instead (atempo keeps pitch).
